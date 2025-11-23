@@ -18,15 +18,16 @@ export default function LoginPage() {
     }
 
     try {
-      const res = await axios.post("/api/login", {
+      // ⭐ เชื่อม backend โดยตรงผ่าน port 8080
+      const res = await axios.post("http://localhost:8080/api/login", {
         email,
         password,
       });
 
-      // ⬇ ได้ข้อมูล user จาก backend
-      const { id, email: userEmail, role } = res.data;
+      const { id, email: userEmail, role, token } = res.data;
 
-      // เก็บสถานะการเข้าสู่ระบบ
+      // ⭐ เก็บ token ไว้ใช้กับ API อื่น ๆ
+      localStorage.setItem("token", token);
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userEmail", userEmail);
       localStorage.setItem("role", role);
@@ -62,7 +63,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-3 border rounded-lg bg-gray-50 
-              focus:ring-red-300 focus:border-red-500 outline-none"
+                focus:ring-red-300 focus:border-red-500 outline-none"
               placeholder="กรอกอีเมล"
             />
           </div>
@@ -76,7 +77,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-3 border rounded-lg bg-gray-50 
-              focus:ring-red-300 focus:border-red-500 outline-none"
+                focus:ring-red-300 focus:border-red-500 outline-none"
               placeholder="กรอกรหัสผ่าน"
             />
           </div>
@@ -89,7 +90,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleLogin}
             className="w-full bg-red-600 text-white py-3 rounded-lg 
-            font-semibold hover:bg-red-700 transition"
+              font-semibold hover:bg-red-700 transition"
           >
             เข้าสู่ระบบ
           </button>

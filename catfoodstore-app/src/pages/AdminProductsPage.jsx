@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function AdminProductsPage() {
+  // เช็คสิทธิ์ก่อนเข้าหน้า
   useEffect(() => {
     const role = localStorage.getItem("role");
     if (role !== "admin") {
@@ -11,70 +13,114 @@ export default function AdminProductsPage() {
 
   const [products, setProducts] = useState([]);
 
-  // Add form
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [newImage, setNewImage] = useState("");
   const [newDesc, setNewDesc] = useState("");
 
-  // Edit form
   const [editItem, setEditItem] = useState(null);
 
-  /* Load Products */
+  const token = localStorage.getItem("token");
+
+  // ==========================
+  // LOAD PRODUCTS FROM API
+  // ==========================
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get("/api/products");
+      setProducts(res.data);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  };
+
   useEffect(() => {
-    const saved = localStorage.getItem("products");
-    if (saved) setProducts(JSON.parse(saved));
+    fetchProducts();
   }, []);
 
-  const saveProducts = (list) => {
-    localStorage.setItem("products", JSON.stringify(list));
-    setProducts(list);
-  };
-
-  /* Delete */
-  const deleteProduct = (id) => {
-    const updated = products.filter((p) => p.id !== id);
-    saveProducts(updated);
-  };
-
-  /* Add Product */
-  const addProduct = () => {
+  // ==========================
+  // ADD PRODUCT (POST)
+  // ==========================
+  const addProduct = async () => {
     if (!newName || !newPrice || !newImage || !newDesc) {
       alert("กรุณากรอกข้อมูลให้ครบ");
       return;
     }
 
-    const newItem = {
-      id: Date.now(),
-      name: newName,
-      price: Number(newPrice),
-      image_url: newImage,
-      description: newDesc,
-      age_group: "all",
-      category: "dry",
-      breed_type: ["all"],
-      health: ["general"],
-    };
+    try {
+      await axios.post(
+        "/api/admin/products",
+        {
+          name: newName,
+          description: newDesc,
+          price: Number(newPrice),
+          weight: "1kg",
+          age_group: "kitten",
+          breed_type: ["all"],
+          category: "dry",
+          image_url: newImage,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    const updated = [...products, newItem];
-    saveProducts(updated);
+      alert("เพิ่มสินค้าสำเร็จ");
+      setShowAddForm(false);
+      setNewName("");
+      setNewPrice("");
+      setNewImage("");
+      setNewDesc("");
 
-    setNewName("");
-    setNewPrice("");
-    setNewImage("");
-    setNewDesc("");
-    setShowAddForm(false);
+      fetchProducts();
+    } catch (err) {
+      console.log("Add error:", err);
+      alert("เพิ่มสินค้าไม่สำเร็จ");
+    }
   };
 
-  /* Update Product */
-  const updateProduct = () => {
-    const updated = products.map((p) =>
-      p.id === editItem.id ? editItem : p
-    );
+  // ==========================
+  // UPDATE PRODUCT (PUT)
+  // ==========================
+  const updateProduct = async () => {
+    try {
+      await axios.put(
+        `/api/admin/products/${editItem.id}`,
+        editItem,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-    saveProducts(updated);
-    setEditItem(null);
+      alert("บันทึกการแก้ไขสำเร็จ");
+      setEditItem(null);
+      fetchProducts();
+    } catch (err) {
+      console.log("Update error:", err);
+      alert("แก้ไขไม่สำเร็จ");
+    }
+  };
+
+  // ==========================
+  // DELETE PRODUCT
+  // ==========================
+  const deleteProduct = async (id) => {
+    if (!window.confirm("ต้องการลบสินค้านี้ใช่หรือไม่?")) return;
+
+    try {
+      await axios.delete(`/api/admin/products/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      alert("ลบสินค้าสำเร็จ");
+      fetchProducts();
+    } catch (err) {
+      console.log("Delete error:", err);
+      alert("ลบไม่สำเร็จ");
+    }
   };
 
   return (
@@ -161,8 +207,10 @@ export default function AdminProductsPage() {
                   className="w-16 h-16 object-cover mx-auto rounded"
                 />
               </td>
+
               <td className="border p-2">{p.name}</td>
               <td className="border p-2">{p.price} บาท</td>
+
               <td className="border p-2 space-x-2">
                 <button
                   onClick={() => setEditItem(p)}
@@ -170,6 +218,7 @@ export default function AdminProductsPage() {
                 >
                   แก้ไข
                 </button>
+
                 <button
                   onClick={() => deleteProduct(p.id)}
                   className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
@@ -241,7 +290,6 @@ export default function AdminProductsPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
