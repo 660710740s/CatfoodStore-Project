@@ -11,6 +11,7 @@ type Product struct {
 	AgeGroup    string    `json:"age_group"`
 	BreedType   []string  `json:"breed_type"`
 	Category    string    `json:"category"`
+	Stock 		int `json:"stock"`
 	ImageURL    string    `json:"image_url"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`

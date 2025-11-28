@@ -15,7 +15,7 @@ services:
     build:
       context: ./catfoodstore_backend
       dockerfile: Dockerfile
-    container_name: catfoodstore_backend
+    container_name: catfoodfoodstore_backend
     env_file:
       - ./catfoodstore_backend/.env
     ports:
@@ -24,15 +24,26 @@ services:
       - db
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./catfoodstore-app
+      dockerfile: Dockerfile
+    container_name: catfoodstore_frontend
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
   nginx:
     image: nginx
     container_name: catfoodstore_nginx
     ports:
       - "80:80"
     volumes:
-      - ./catfoodstore-app/build:/usr/share/nginx/html
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
+      - frontend
       - backend
 
   pgadmin:
